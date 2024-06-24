@@ -197,7 +197,9 @@ nav {
 .container {
     padding: 15px;
     box-shadow: 0px 0px 2px grey;
-    max-width: 550px;
+    /* max-width: 550px; */
+    max-width: 1200px;
+
     font-size: large;
     /* margin: 15px; */
     margin: 0 auto;
@@ -206,6 +208,8 @@ nav {
     border-radius: 10px;
     
     margin-bottom: 10vh;
+
+
 
 
     h1 {
@@ -364,6 +368,10 @@ nav {
         line-height: 1.5em;
     }
 
+    h2 {
+        margin-top: 0;
+    }
+
     img {
         max-height: 50vh;
         border-radius: 10px;
@@ -418,7 +426,92 @@ nav {
 }
 
 
-@media screen and (max-width: 950px) {
+.weather-item {
+    /* border: 1px solid #ccc; */
+    border-radius: 5px;
+    padding: 12px;
+    /* margin: 10px; */
+    background-color: #2c2c2c;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    /* text-align: center; */
+    /* font-family: Arial, sans-serif; */
+
+    width: 100%;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+
+    .weather-icon {
+        font-size: 2em;
+        /* color: #007bff; */
+        color: #28a745;
+        margin-right: 5px;
+    }
+
+    p {
+        margin: 8px 0;
+        font-size: 1em;
+        color: #cecece;
+    
+    }
+
+    h2 {
+        margin-top: 0;
+        margin-bottom: 0;
+        font-size: 1.2em;
+        font-weight: 400;
+        /* color: black; */
+    }
+
+    h3 {
+        /* color: black; */
+        margin-top: 0;
+        margin-bottom: 0;
+        /* font-size: 1.2em; */
+        /* color: #333; */
+    }
+
+    h3:last-child {
+        margin-bottom: auto;
+    }
+
+}
+
+.response-container {
+    .response-icons {
+        display: flex;
+        flex-direction: row;
+        gap: 1vw;
+    }
+}
+
+
+#weatherContainer {
+    display: flex;
+    /* flex-wrap: wrap; */
+    justify-content: space-around;
+    gap: 10px;
+    margin-top: 20px;
+
+    /* overflow-x: scroll; */
+
+
+}
+
+/* .weather-container-text {
+    display: flex;
+    gap: 1vw;
+    
+} */
+
+#weatherContainer::-webkit-scrollbar {
+    display: none;
+}
+
+
+
+@media screen and (max-width: 1600px) {
     .close-icon {
         display: block;
     }
@@ -483,12 +576,26 @@ nav {
 
 }
 
-@media screen and (max-width: 580px) {
+@media screen and (max-width: 1400px) {
+    
+    .container {
+        border-radius: 0;
+
+        #weatherContainer {
+            /* overflow-x: auto; */
+        }
+    }
+
+
+}
+
+@media screen and (max-width: 1000px) {
     
     form, .container {
         flex-direction: column;
 
-        position: fixed;
+        /* position: fixed; */
+        position: relative;
         bottom: 0;
         right: 0;
         padding: 12px;
@@ -496,6 +603,17 @@ nav {
 
         input {
             margin-bottom: 1vh;
+        }
+    }
+
+    .container {
+        .button-container {
+            position: fixed;
+            /* position: relative; */
+            bottom: 20px;
+            right: 15px;
+            padding: 12px;
+            /* width: 100%; */
         }
     }
 
@@ -538,15 +656,43 @@ nav {
             margin-right: 0;
         }
 
-        /* h1 {
+        h1 {
             display: none;
-        } */
+        }
     }
 
     header {
         justify-content: space-between;
     }
 
+    #weatherContainer {
+        flex-wrap: wrap;
+
+    }
+
+    .weather-container {
+        /* display: flex; */
+        flex-direction: row;
+        gap: 2vw;
+    }
+
+    .weather-container-text {
+        display: flex;
+        gap: 2vw;
+        
+    }
+
+}
+
+
+@media screen and (max-width: 350px) {
+    .container {
+        .button-container {
+            position: relative;
+            display: inline-flex;
+            gap: 1vw;
+        }
+    }
 }
 
 @media screen and (prefers-color-scheme: light) {
@@ -587,7 +733,24 @@ nav {
             }
         }
 
+        #weatherContainer {
+            .weather-item {
+                background-color: #e7e7e7;
+                color: black;
+                box-shadow: 1px 1px 2px grey;
+            }
 
+            .weather-item p {
+                color: rgb(29, 29, 29) !important;
+            }
+            
+        }
+
+        .container {
+            button {
+                box-shadow: 1px 1px 2px grey;
+            }
+        }
 
     
 }
