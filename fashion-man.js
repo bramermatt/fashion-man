@@ -1,25 +1,10 @@
 document.addEventListener('DOMContentLoaded', (event) => {
     console.log('DOM fully loaded and parsed');
-    document.getElementById('weatherButton').addEventListener('click', () => {
-        console.log('Weather button clicked');
-        getWeather();
-    });
-    document.getElementById('locationButton').addEventListener('click', () => {
-        console.log('Location button clicked');
-        getWeatherForLocation();
-    });
-    document.getElementById('refreshButton').addEventListener('click', () => {
-        console.log('Refresh button clicked');
-        refreshWeather();
-    });
-    document.getElementById('tenDayButton').addEventListener('click', () => {
-        console.log('Ten-day button clicked');
-        getTenDayForecast();
-    });
-    document.getElementById('clearButton').addEventListener('click', () => {
-        console.log('Clear button clicked');
-        clearScreen();
-    });
+    document.getElementById('weatherButton').addEventListener('click', getWeather);
+    document.getElementById('locationButton').addEventListener('click', getWeatherForLocation);
+    document.getElementById('refreshButton').addEventListener('click', refreshWeather);
+    document.getElementById('tenDayButton').addEventListener('click', getTenDayForecast);
+    document.getElementById('clearButton').addEventListener('click', clearScreen);
 });
 
 function initAutocomplete() {
@@ -28,24 +13,10 @@ function initAutocomplete() {
     autocomplete.setFields(['geometry']);
 }
 
-function getWeather() {
+async function getWeather() {
     console.log('getWeather function called');
     if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(async position => {
-            const { latitude, longitude } = position.coords;
-            const apiKey = 'b6b5d04b0246ab914442d994e8d0b745';
-            const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${latitude}&lon=${longitude}&units=imperial&appid=${apiKey}`;
-
-            try {
-                const response = await fetch(url);
-                const data = await response.json();
-                console.log(data); // Log the data to the console
-                displayWeather(data, 7); // Display 7 days by default
-            } catch (error) {
-                console.error('Error fetching weather data:', error);
-                document.getElementById('weatherText').textContent = 'Sorry, there was an error getting the weather data.';
-            }
-        }, () => {
+        navigator.geolocation.getCurrentPosition(fetchWeatherData, () => {
             document.getElementById('weatherText').textContent = 'Unable to retrieve your location.';
         });
     } else {
@@ -58,31 +29,35 @@ async function getWeatherForLocation() {
     const input = document.getElementById('locationInput');
     const location = input.value;
     const geocoder = new google.maps.Geocoder();
-    geocoder.geocode({ 'address': location }, async function (results, status) {
+    geocoder.geocode({ 'address': location }, (results, status) => {
         if (status === 'OK') {
             const latitude = results[0].geometry.location.lat();
             const longitude = results[0].geometry.location.lng();
-            const apiKey = 'b6b5d04b0246ab914442d994e8d0b745';
-            const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${latitude}&lon=${longitude}&units=imperial&appid=${apiKey}`;
-
-            try {
-                const response = await fetch(url);
-                const data = await response.json();
-                console.log(data); // Log the data to the console
-                displayWeather(data, 7); // Display 7 days by default
-            } catch (error) {
-                console.error('Error fetching weather data:', error);
-                document.getElementById('weatherText').textContent = 'Sorry, there was an error getting the weather data.';
-            }
+            fetchWeatherData({ coords: { latitude, longitude } });
         } else {
             alert('Geocode was not successful for the following reason: ' + status);
         }
     });
 }
 
+async function fetchWeatherData(position) {
+    const { latitude, longitude } = position.coords;
+    const apiKey = 'b6b5d04b0246ab914442d994e8d0b745';
+    const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${latitude}&lon=${longitude}&units=imperial&appid=${apiKey}`;
+
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
+        console.log(data);
+        displayWeather(data, 7);
+    } catch (error) {
+        console.error('Error fetching weather data:', error);
+        document.getElementById('weatherText').textContent = 'Sorry, there was an error getting the weather data.';
+    }
+}
+
 function refreshWeather() {
     console.log('refreshWeather function called');
-    // Call the appropriate function based on the current input or location
     if (document.getElementById('locationInput').value !== '') {
         getWeatherForLocation();
     } else {
@@ -92,27 +67,7 @@ function refreshWeather() {
 
 function getTenDayForecast() {
     console.log('getTenDayForecast function called');
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(async position => {
-            const { latitude, longitude } = position.coords;
-            const apiKey = 'b6b5d04b0246ab914442d994e8d0b745';
-            const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${latitude}&lon=${longitude}&units=imperial&appid=${apiKey}`;
-
-            try {
-                const response = await fetch(url);
-                const data = await response.json();
-                console.log(data); // Log the data to the console
-                displayWeather(data, 10); // Display 10 days
-            } catch (error) {
-                console.error('Error fetching weather data:', error);
-                document.getElementById('weatherText').textContent = 'Sorry, there was an error getting the weather data.';
-            }
-        }, () => {
-            document.getElementById('weatherText').textContent = 'Unable to retrieve your location.';
-        });
-    } else {
-        document.getElementById('weatherText').textContent = 'Geolocation is not supported by this browser.';
-    }
+    getWeather();
 }
 
 function clearScreen() {
@@ -125,28 +80,53 @@ function clearScreen() {
 function displayWeather(data, days) {
     console.log('displayWeather function called with days:', days);
     const weatherContainer = document.getElementById('weatherContainer');
-    weatherContainer.innerHTML = ''; // Clear previous content
+    weatherContainer.innerHTML = '';
 
-    const forecast = data.list.filter(item => item.dt_txt.includes('12:00:00')).slice(0, days);
-    
-    forecast.forEach(item => {
-        const date = new Date(item.dt_txt).toLocaleDateString();
-        const temp = Math.round(item.main.temp); // Round the temperature to the nearest whole number
-        const weatherCondition = item.weather[0].description;
-        const recommendation = getRecommendation(temp);
-        const weatherIcon = getWeatherIcon(item.weather[0].main); // Get the Font Awesome icon based on weather condition
-        const clothingOptions = getClothingOptions(item.weather[0].main); // Get clothing options based on weather condition
+    const groupedForecast = groupForecastByDay(data.list);
+    const cityName = data.city.name;
+
+    // Get current weather (first item in the list)
+    const currentWeather = data.list[0];
+    const currentTemp = Math.round(currentWeather.main.temp);
+    const currentCondition = currentWeather.weather[0].description;
+    const currentIcon = getWeatherIcon(currentWeather.weather[0].main);
+
+    // Add weather overview with current conditions
+    const overviewContainer = document.createElement('div');
+    overviewContainer.className = 'weather-overview';
+    overviewContainer.innerHTML = `
+    <div class="your-weather">
+        <h2>Weather Overview for ${cityName}</h2>
+        <div class="current-weather">
+            <h3>Current Conditions</h3>
+            <p>${currentIcon} ${currentTemp}°F - ${currentCondition}</p>
+        </div>
+    </div>
+    `;
+    weatherContainer.appendChild(overviewContainer);
+
+    Object.entries(groupedForecast).slice(0, days).forEach(([date, forecasts]) => {
         const weatherItem = document.createElement('div');
         weatherItem.className = 'weather-item';
 
-        weatherItem.innerHTML = `
+        const temps = forecasts.map(f => f.main.temp);
+        const avgTemp = Math.round(temps.reduce((sum, temp) => sum + temp, 0) / temps.length);
+        const minTemp = Math.round(Math.min(...temps));
+        const maxTemp = Math.round(Math.max(...temps));
+        const mainWeather = forecasts[Math.floor(forecasts.length / 2)].weather[0].main;
 
+        const recommendation = getRecommendation(avgTemp);
+        const weatherIcon = getWeatherIcon(mainWeather);
+        const clothingOptions = getClothingOptions(mainWeather);
+
+        weatherItem.innerHTML = `
+        <div class="weather-rec">
         <div class="weather-container">
-            <h2>${date}</h2>
+        <div class="weather-top">
+            <h2>${new Date(date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</h2>
             <div class="weather-container-text">
-                <h3>${temp}°F</h3>    
-                <h3>${weatherCondition}</h3>
- 
+                <h3>Avg: ${avgTemp}°F (Low: ${minTemp}°F, High: ${maxTemp}°F)</h3>
+                <h3>${mainWeather}</h3>
             </div>
         </div>
 
@@ -154,10 +134,31 @@ function displayWeather(data, days) {
             <p>${recommendation.text}</p>
             <div class="response-icons">${clothingOptions} ${recommendation.icon}</div>
         </div>
+        </div>
+        </div>
+
+        <div class="hourly-forecast">
+            <h4>Hourly Breakdown:</h4>
+            ${forecasts.map(f => `
+                <p>${new Date(f.dt * 1000).toLocaleTimeString('en-US', { hour: 'numeric', hour12: true })}: 
+                   ${Math.round(f.main.temp)}°F - ${f.weather[0].description}</p>
+            `).join('')}
+        </div>
         `;
 
         weatherContainer.appendChild(weatherItem);
     });
+}
+
+function groupForecastByDay(forecastList) {
+    return forecastList.reduce((groups, item) => {
+        const date = item.dt_txt.split(' ')[0];
+        if (!groups[date]) {
+            groups[date] = [];
+        }
+        groups[date].push(item);
+        return groups;
+    }, {});
 }
 
 function getRecommendation(temp) {
@@ -188,7 +189,6 @@ function getRecommendation(temp) {
         };
     }
 }
-
 
 function getClothingOptions(weatherMain) {
     switch (weatherMain) {
@@ -248,5 +248,4 @@ function getWeatherIcon(weatherMain) {
     }
 }
 
-// Initialize the autocomplete when the page loads
 window.onload = initAutocomplete;
