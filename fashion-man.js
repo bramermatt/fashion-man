@@ -3,7 +3,6 @@ document.addEventListener('DOMContentLoaded', (event) => {
     document.getElementById('weatherButton').addEventListener('click', getWeather);
     document.getElementById('locationButton').addEventListener('click', getWeatherForLocation);
     document.getElementById('refreshButton').addEventListener('click', refreshWeather);
-    document.getElementById('tenDayButton').addEventListener('click', getTenDayForecast);
     document.getElementById('clearButton').addEventListener('click', clearScreen);
 });
 
@@ -49,7 +48,7 @@ async function fetchWeatherData(position) {
         const response = await fetch(url);
         const data = await response.json();
         console.log(data);
-        displayWeather(data, 7);
+        displayWeather(data, 2); // Show only today and tomorrow's weather
     } catch (error) {
         console.error('Error fetching weather data:', error);
         document.getElementById('weatherText').textContent = 'Sorry, there was an error getting the weather data.';
@@ -63,11 +62,6 @@ function refreshWeather() {
     } else {
         getWeather();
     }
-}
-
-function getTenDayForecast() {
-    console.log('getTenDayForecast function called');
-    getWeather();
 }
 
 function clearScreen() {
@@ -91,6 +85,12 @@ function displayWeather(data, days) {
     const currentCondition = currentWeather.weather[0].description;
     const currentIcon = getWeatherIcon(currentWeather.weather[0].main);
 
+    // Get current date and time
+    const now = new Date();
+    const currentDay = now.toLocaleDateString('en-US', { weekday: 'long' });
+    const currentDate = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const currentTime = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true });
+
     // Add weather overview with current conditions
     const overviewContainer = document.createElement('div');
     overviewContainer.className = 'weather-overview';
@@ -99,6 +99,7 @@ function displayWeather(data, days) {
         <h2>Weather Overview for ${cityName}</h2>
         <div class="current-weather">
             <h3>Current Conditions</h3>
+            <p>${currentDay}, ${currentDate} ${currentTime}</p>
             <p>${currentIcon} ${currentTemp}°F - ${currentCondition}</p>
         </div>
     </div>
@@ -149,6 +150,7 @@ function displayWeather(data, days) {
         weatherContainer.appendChild(weatherItem);
     });
 }
+
 
 function groupForecastByDay(forecastList) {
     return forecastList.reduce((groups, item) => {
@@ -211,24 +213,24 @@ function getClothingOptions(weatherMain) {
         case 'Tornado':
             return '<i class="fas fa-hat-wizard weather-icon"></i><i class="fas fa-glasses weather-icon"></i>';
         case 'Clear':
-            return '<i class="fas fa-sun weather-icon"></i><i class="fas fa-sunglasses weather-icon"></i>';
+            return '<i class="fas fa-sunglasses weather-icon"></i><i class="fas fa-hat-sun weather-icon"></i>';
         case 'Clouds':
-            return '<i class="fas fa-cloud weather-icon"></i>';
+            return '<i class="fas fa-hat-wizard weather-icon"></i>';
         default:
-            return '<i class="fas fa-question-circle weather-icon"></i>';
+            return '';
     }
 }
 
 function getWeatherIcon(weatherMain) {
     switch (weatherMain) {
         case 'Thunderstorm':
-            return '<i class="fas fa-bolt weather-icon"></i>';
+            return '<i class="fas fa-bolt"></i>';
         case 'Drizzle':
-            return '<i class="fas fa-cloud-rain weather-icon"></i>';
+            return '<i class="fas fa-cloud-rain"></i>';
         case 'Rain':
-            return '<i class="fas fa-cloud-showers-heavy weather-icon"></i>';
+            return '<i class="fas fa-cloud-showers-heavy"></i>';
         case 'Snow':
-            return '<i class="fas fa-snowflake weather-icon"></i>';
+            return '<i class="fas fa-snowflake"></i>';
         case 'Mist':
         case 'Smoke':
         case 'Haze':
@@ -238,14 +240,16 @@ function getWeatherIcon(weatherMain) {
         case 'Ash':
         case 'Squall':
         case 'Tornado':
-            return '<i class="fas fa-smog weather-icon"></i>';
+            return '<i class="fas fa-smog"></i>';
         case 'Clear':
-            return '<i class="fas fa-sun weather-icon"></i>';
+            return '<i class="fas fa-sun"></i>';
         case 'Clouds':
-            return '<i class="fas fa-cloud weather-icon"></i>';
+            return '<i class="fas fa-cloud"></i>';
         default:
-            return '<i class="fas fa-question-circle weather-icon"></i>';
+            return '';
     }
 }
+
+
 
 window.onload = initAutocomplete;

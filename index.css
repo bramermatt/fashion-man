@@ -107,18 +107,20 @@ nav {
 header {
     display: flex;
     align-items: center;
+    justify-content: space-between;
+
     padding: 15px;
 
-    position: sticky;
+    /* position: sticky; */
     top: 0;
     z-index: 10;
 
     box-shadow: 0px 0px 2px grey;
 
     img {
-        height: 40px;
+        height: 4vh;
         margin-right: 20px;
-        cursor: pointer;
+        /* cursor: pointer; */
     }
 
     h1 {
@@ -127,7 +129,18 @@ header {
         font-size: medium;
     }
 
+    i {
+        font-size: 24px;
+        cursor: pointer;
+    }
 
+
+}
+
+.header-title {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
 }
 
 
@@ -552,6 +565,11 @@ nav {
 
         p {
             margin: 0;
+            margin-bottom: 15px;
+        }
+
+        p:last-child {
+            margin-bottom: 0;
         }
     }
 }
@@ -590,7 +608,7 @@ nav {
         box-shadow: none;
 
         
-        img:hover {
+        i:hover {
             opacity: 60%;
         }
 
@@ -860,7 +878,7 @@ nav {
     }
 
     header{
-        background-color: rgb(0, 0, 0, 0.9);
+        /* background-color: rgb(0, 0, 0, 0.9); */
 
         img {
             filter:invert(1);
