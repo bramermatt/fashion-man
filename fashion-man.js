@@ -42,13 +42,13 @@ async function getWeatherForLocation() {
 async function fetchWeatherData(position) {
     const { latitude, longitude } = position.coords;
     const apiKey = 'b6b5d04b0246ab914442d994e8d0b745';
-    const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${latitude}&lon=${longitude}&units=imperial&appid=${apiKey}`;
+    const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${latitude}&lon=${longitude}&units=imperial&cnt=16&appid=${apiKey}`;
 
     try {
         const response = await fetch(url);
         const data = await response.json();
         console.log(data);
-        displayWeather(data, 2); // Show only today and tomorrow's weather
+        displayWeather(data);
     } catch (error) {
         console.error('Error fetching weather data:', error);
         document.getElementById('weatherText').textContent = 'Sorry, there was an error getting the weather data.';
@@ -71,15 +71,13 @@ function clearScreen() {
     document.getElementById('iconContainer').innerHTML = '';
 }
 
-function displayWeather(data, days) {
-    console.log('displayWeather function called with days:', days);
+function displayWeather(data) {
     const weatherContainer = document.getElementById('weatherContainer');
     weatherContainer.innerHTML = '';
 
-    const groupedForecast = groupForecastByDay(data.list);
     const cityName = data.city.name;
 
-    // Get current weather (first item in the list)
+    // Current weather (first item in the list)
     const currentWeather = data.list[0];
     const currentTemp = Math.round(currentWeather.main.temp);
     const currentCondition = currentWeather.weather[0].description;
@@ -106,50 +104,64 @@ function displayWeather(data, days) {
     `;
     weatherContainer.appendChild(overviewContainer);
 
-    Object.entries(groupedForecast).slice(0, days).forEach(([date, forecasts]) => {
-        const weatherItem = document.createElement('div');
-        weatherItem.className = 'weather-item';
+    // Group forecasts by day
+    const forecastByDay = data.list.reduce((acc, forecast) => {
+        const date = new Date(forecast.dt * 1000);
+        const day = date.toLocaleDateString('en-US', { weekday: 'long' });
+        if (!acc[day]) {
+            acc[day] = [];
+        }
+        acc[day].push(forecast);
+        return acc;
+    }, {});
 
-        const temps = forecasts.map(f => f.main.temp);
-        const avgTemp = Math.round(temps.reduce((sum, temp) => sum + temp, 0) / temps.length);
-        const minTemp = Math.round(Math.min(...temps));
-        const maxTemp = Math.round(Math.max(...temps));
-        const mainWeather = forecasts[Math.floor(forecasts.length / 2)].weather[0].main;
+    // Create forecast sections
+    const forecastContainer = document.createElement('div');
+    forecastContainer.className = 'forecast-box';
 
-        const recommendation = getRecommendation(avgTemp);
-        const weatherIcon = getWeatherIcon(mainWeather);
-        const clothingOptions = getClothingOptions(mainWeather);
+    Object.keys(forecastByDay).forEach(day => {
+        const dayContainer = document.createElement('div');
+        dayContainer.className = 'day-forecast';
 
-        weatherItem.innerHTML = `
-        <div class="weather-rec">
-        <div class="weather-container">
-        <div class="weather-top">
-            <h2>${new Date(date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</h2>
-            <div class="weather-container-text">
-                <h3>Avg: ${avgTemp}°F (Low: ${minTemp}°F, High: ${maxTemp}°F)</h3>
-                <h3>${mainWeather}</h3>
-            </div>
-        </div>
+        const dayDate = new Date(forecastByDay[day][0].dt * 1000);
+        const dayHeader = document.createElement('h3');
+        dayHeader.textContent = `${day} (${dayDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})`;
+        dayContainer.appendChild(dayHeader);
 
-        <div class="response-container">
-            <p>${recommendation.text}</p>
-            <div class="response-icons">${clothingOptions} ${recommendation.icon}</div>
-        </div>
-        </div>
-        </div>
+        const forecastList = document.createElement('ul');
+        forecastList.className = 'forecast-list';
 
-        <div class="hourly-forecast">
-            <h4>Hourly Breakdown:</h4>
-            ${forecasts.map(f => `
-                <p>${new Date(f.dt * 1000).toLocaleTimeString('en-US', { hour: 'numeric', hour12: true })}: 
-                   ${Math.round(f.main.temp)}°F - ${f.weather[0].description}</p>
-            `).join('')}
-        </div>
-        `;
+        forecastByDay[day].forEach((forecast, index) => {
+            const date = new Date(forecast.dt * 1000);
+            const temp = Math.round(forecast.main.temp);
+            const condition = forecast.weather[0].description;
+            const icon = getWeatherIcon(forecast.weather[0].main);
+            const recommendation = getRecommendation(temp);
 
-        weatherContainer.appendChild(weatherItem);
+            const hourlyItem = document.createElement('li');
+            hourlyItem.className = 'forecast-item';
+            hourlyItem.innerHTML = `
+                <span class="forecast-time">${(index === 0 && day === currentDay) ? 'Now' : date.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true })}</span>
+
+                
+                <div class="temp-condition">
+                <span class="forecast-temp">${icon} ${temp}°F</span>
+                <span class="forecast-condition">${condition}</span>
+                </div>
+
+                <span class="forecast-recommendation">${recommendation.icon} ${recommendation.text}</span>
+            `;
+
+            forecastList.appendChild(hourlyItem);
+        });
+
+        dayContainer.appendChild(forecastList);
+        forecastContainer.appendChild(dayContainer);
     });
+
+    weatherContainer.appendChild(forecastContainer);
 }
+
 
 
 function groupForecastByDay(forecastList) {
@@ -249,7 +261,5 @@ function getWeatherIcon(weatherMain) {
             return '';
     }
 }
-
-
 
 window.onload = initAutocomplete;
