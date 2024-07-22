@@ -681,7 +681,7 @@ nav {
 
 .forecast-recommendation {
     flex: 1;
-    text-align: right;
+    /* text-align: right; */
 }
 
 .weather-icon {
